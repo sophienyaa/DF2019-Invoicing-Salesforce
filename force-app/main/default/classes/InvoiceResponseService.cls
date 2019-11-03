@@ -10,7 +10,7 @@ public class InvoiceResponseService {
             att.ParentId = response.Related_OppId__c;
             att.Name = 'Invoice - ' + response.Invoice_Number__c + '.pdf';
             att.contentType = 'application/pdf';
-            atts.add(att);
+            atts.add(att); 
         }
         
         insert atts;
