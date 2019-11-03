@@ -2,21 +2,21 @@ public class InvoicePDFController {
     
     public static Date todayDate {get; set;}
     public static Date dueDate {get; set;}
-    public static OpportunityChangeEventHandler.CustomerInformation customerInfo {get; set;}
-    public Static List<OpportunityChangeEventHandler.LineItem> invoiceLines {get; set;}
+    public static InvoicingDTO.CustomerInformation customerInfo {get; set;}
+    public Static List<InvoicingDTO.LineItem> invoiceLines {get; set;}
     public static Decimal totalPrice {get; set;}
     
     public InvoicePDFController() {
         todayDate = date.today();
         dueDate = todayDate.addDays(30);
-        customerInfo = (OpportunityChangeEventHandler.CustomerInformation)JSON.deserialize(System.currentPageReference().getParameters().get('custInfo'), OpportunityChangeEventHandler.CustomerInformation.class);
-        invoiceLines = (List<OpportunityChangeEventHandler.LineItem>)JSON.deserialize(System.currentPageReference().getParameters().get('invoiceLines'), List<OpportunityChangeEventHandler.LineItem>.class);
+        customerInfo = (InvoicingDTO.CustomerInformation)JSON.deserialize(System.currentPageReference().getParameters().get('custInfo'), InvoicingDTO.CustomerInformation.class);
+        invoiceLines = (List<InvoicingDTO.LineItem>)JSON.deserialize(System.currentPageReference().getParameters().get('invoiceLines'), List<InvoicingDTO.LineItem>.class);
     	totalPrice = calcTotalPrice(invoiceLines);
     }
 
-    private Decimal calcTotalPrice(List<OpportunityChangeEventHandler.LineItem> invoiceLines) {
+    private Decimal calcTotalPrice(List<InvoicingDTO.LineItem> invoiceLines) {
         Decimal totalPrice = 0;
-        for( OpportunityChangeEventHandler.LineItem line :invoiceLines) {
+        for( InvoicingDTO.LineItem line :invoiceLines) {
             totalPrice = totalPrice + line.itemCost;
         }
         return totalPrice;
