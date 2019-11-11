@@ -3,7 +3,7 @@
     <html>
         <head>
             <meta charset="utf-8"/>
-            <title>Invoice Number {!customerInfo.invoiceNumber}</title>
+            <title>Invoice Number {!invoiceData.Invoice_Number__c}</title>
             <style>
                 .invoice-box {
                 max-width: 800px;
@@ -111,7 +111,7 @@
                                     </td>
                                     
                                     <td>
-                                        Invoice #: {!customerInfo.invoiceNumber}<br/>
+                                        Invoice #: {!invoiceData.Invoice_Number__c}<br/>
                                         Created: <apex:outputText value="{0, date, MMMM d','  yyyy}">
                                             <apex:param value="{!todayDate}" /> 
                                         </apex:outputText> <br/>                                        
@@ -133,17 +133,17 @@
                                         <br/>
                                         <br/>
                                         1 Rivergate<br/>
-                                        Bristol BS1 6ED <br/>
+                                        Bristol &nbsp; BS1 6ED <br/>
                                         United Kingdom <br/>
                                     </td>
                                     
                                     <td>
-                                       {!customerInfo.companyName} <br/>
-                                       {!customerInfo.customerName} <br/>
+                                       {!invoiceData.Company_Name__c} <br/>
+                                       {!invoiceData.Customer_Name__c} <br/>
                                         <br/>
-                                       {!customerInfo.addressStreet} <br/>
-                                       {!customerInfo.city} &nbsp; {!customerInfo.postCode} <br/>
-                                       {!customerInfo.country} <br/>
+                                       {!invoiceData.Address_Street__c} <br/>
+                                       {!invoiceData.City__c} &nbsp; {!invoiceData.Postcode__c} <br/>
+                                       {!invoiceData.Country__c} <br/>
                                     </td>
                                 </tr>
                             </table>
@@ -188,11 +188,9 @@
                     </tr>
                 </table>
                 
-                <strong>Notes:</strong> {!customerInfo.notes}
+                <strong>Notes:</strong> {!invoiceData.Notes__c}
             </div>
         </body>
     </html>
-    
-    
     
 </apex:page>
