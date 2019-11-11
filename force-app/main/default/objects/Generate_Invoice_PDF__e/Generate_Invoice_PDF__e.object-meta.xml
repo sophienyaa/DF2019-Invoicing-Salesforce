@@ -2,7 +2,7 @@
 <CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
     <deploymentStatus>Deployed</deploymentStatus>
     <eventType>HighVolume</eventType>
-    <label>Invoice Request</label>
-    <pluralLabel>Invoice Requests</pluralLabel>
+    <label>Generate Invoice PDF</label>
+    <pluralLabel>Generate Invoice PDFs</pluralLabel>
     <publishBehavior>PublishAfterCommit</publishBehavior>
 </CustomObject>

@@ -11,78 +11,57 @@ public class OpportunityChangeEventService {
     public static void FireInvoicingRequestPE(List<OpportunityChangeEvent> events) {
         
         List<Id> oppIds = new List<Id>();
-        List<Invoice_Requests__e> requests = new List<Invoice_Requests__e>();
+        List<Generate_Invoice_PDF__e> invoicesToGenerate = new List<Generate_Invoice_PDF__e>();
         
         //Get the opp ids from the change event where they are closed/won
         for (OpportunityChangeEvent event : events) { 
             if(event.StageName == 'Closed Won') {
                 EventBus.ChangeEventHeader header = event.ChangeEventHeader;
-                oppIds.add(header.getRecordIds()[0]);
+                oppIds.addAll(header.getRecordIds());
              }
         }
         
-        //get the opp details
-        Map<Id, Opportunity> opps = New Map<Id, Opportunity>(
-            [ SELECT Id, Name, Account.Name, Account.BillingStreet, Account.BillingCity, Account.BillingPostalCode, Invoice_Number__c,
-              Account.BillingCountry, Contact__r.FirstName, Contact__r.LastName, Contact__r.Email, Contact__r.Phone, Notes__c
-              FROM Opportunity WHERE Id IN :oppIds]
-        );
-        
-        //get the oli details
-        Map<Id, List<OpportunityLineItem>> oliMap = new Map<Id, List<OpportunityLineItem>>();
-        List<OpportunityLineItem> olis = [ SELECT Id, Quantity, UnitPrice, Product2.Name, Description, TotalPrice, OpportunityId, 
-                                          ProductCode, ListPrice
-                                          FROM OpportunityLineItem WHERE OpportunityId IN :oppIds ORDER BY OpportunityId];
-        
-        for(OpportunityLineItem oli :olis) {
-            if(oliMap.get(oli.OpportunityId) == null) { //no OLIs yet, create a map entry
-                List<OpportunityLineItem> mapOlis = new List<OpportunityLineItem>();
-                mapOlis.add(oli);
-                oliMap.put(oli.OpportunityId, mapOlis);
-            }
-            else { //has OLIs, get list from map, append and re-add to map
-                List<OpportunityLineItem> mapOlis = oliMap.get(oli.OpportunityId);
-                mapOlis.add(oli);
-                oliMap.put(oli.OpportunityId, mapOlis);
-            }
-        }
-            
-        for(Id oppId : opps.keySet()) {
-            Invoice_Requests__e invReq = new Invoice_Requests__e();
-            
-            //Populate our CustomerInfo object with info from the opp and JSON serialise it
-            invReq.Customer_Information__c = JSON.serialize(oppToCustomerInfo(opps.get(oppId)));
-            
-            //Populate our LineItem object with info from the OLIs and JSON serialise it
-            invReq.Line_Item_Information__c = JSON.serialize(oliToLineItems(oliMap.get(oppId)));
-            
-            requests.add(invReq);
+        // for those opps, get their details and related OLIs
+        List<Opportunity> opps = [SELECT Id, Name, Account.Name, Account.BillingStreet, Account.BillingCity, 
+                                  Account.BillingPostalCode, Invoice_Number__c,
+              					  Account.BillingCountry, Contact__r.FirstName, Contact__r.LastName, 
+                                  Contact__r.Email, Contact__r.Phone, Notes__c, 
+             					 (SELECT Id, Quantity, UnitPrice, Product2.Name, Description, TotalPrice, 
+                                  OpportunityId, ProductCode, ListPrice 
+                                  FROM OpportunityLineItems)
+              					  FROM Opportunity 
+                                  WHERE Id IN :oppIds];
+
+        // for each opp and its olis, build a Generate_Invoice_PDF__e platform event
+        for(Opportunity opp :opps) {
+            invoicesToGenerate.add(oppAndOLIsToGenerateInvoicePDFEvent(opp));
         }
         
-        //Fire the Platform Events
-        List<Database.SaveResult> sr = EventBus.publish(requests);
+        // fire the generated platform events
+        List<Database.SaveResult> sr = EventBus.publish(invoicesToGenerate);
 
     }
     
-    //converts an opp to a CustomerInformation object
-    private static InvoicingDTO.CustomerInformation oppToCustomerInfo(Opportunity opp) {
+    //converts an opp and its OLIs to a CustomerInformation object
+    private static Generate_Invoice_PDF__e oppAndOLIsToGenerateInvoicePDFEvent(Opportunity opp) {
         
-        InvoicingDTO.CustomerInformation custInfo = new InvoicingDTO.CustomerInformation();
+        Generate_Invoice_PDF__e generateInvoicePDF = new Generate_Invoice_PDF__e();
         
-        custInfo.companyName = opp.Account.Name;
-        custInfo.customerName = opp.Contact__r.FirstName + ' ' + opp.Contact__r.LastName;
-        custInfo.addressStreet = opp.Account.BillingStreet;
-        custInfo.postcode = opp.Account.BillingPostalCode;
-        custInfo.city = opp.Account.BillingCity;
-        custInfo.country = opp.Account.BillingCountry;
-        custInfo.phone = opp.Contact__r.Phone;
-        custInfo.email = opp.Contact__r.Email;
-        custInfo.notes = opp.Notes__c;
-        custInfo.oppName = opp.Name;
-        custInfo.oppId = opp.Id;
-        custInfo.invoiceNumber = opp.Invoice_Number__c;
+        generateInvoicePDF.Company_Name__c = opp.Account.Name;
+        generateInvoicePDF.Customer_Name__c = opp.Contact__r.FirstName + ' ' + opp.Contact__r.LastName;
+        generateInvoicePDF.Address_Street__c = opp.Account.BillingStreet;
+        generateInvoicePDF.Postcode__c = opp.Account.BillingPostalCode;
+        generateInvoicePDF.City__c = opp.Account.BillingCity;
+        generateInvoicePDF.Country__c = opp.Account.BillingCountry;
+        generateInvoicePDF.Phone__c = opp.Contact__r.Phone;
+        generateInvoicePDF.Email__c = opp.Contact__r.Email;
+        generateInvoicePDF.Notes__c = opp.Notes__c;
+        generateInvoicePDF.Source_Record_Name__c = opp.Name;
+        generateInvoicePDF.Source_Record_Id__c = opp.Id;
+        generateInvoicePDF.Invoice_Number__c = opp.Invoice_Number__c;
+        generateInvoicePDF.Invoice_Line_Item_JSON__c = JSON.serialize(oliToLineItems(opp.OpportunityLineItems));
         
-        return custInfo;  
+        return generateInvoicePDF;  
     }
     
     //converts a list of opp line items to a list of LineItem objects
