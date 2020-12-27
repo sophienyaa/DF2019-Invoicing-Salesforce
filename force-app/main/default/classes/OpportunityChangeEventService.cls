@@ -1,13 +1,13 @@
 /*
  * This class is our first 'microservice'
  * 
- * It takes an opportunity change event, gets the relivent opportunities and line items and builds a List of Invoice_Requests__e
+ * It takes an opportunity change event, gets the relivent opportunities and line items and builds a List of Generate_Invoice_PDF__e
  * platform events. These platform events are then picked up by the next 'microservice' that will generate an invoice based on their 
  * contents. This 'microservice' doesn't need to exist inside of salesforce, but in our cases it is easier.
 */
 public class OpportunityChangeEventService {
     
-	//Method to build and fire an Invoice_Requests__e platform event for the invoicing engine to handle
+	//Method to build and fire an Generate_Invoice_PDF__e platform event for the invoicing engine to handle
     public static void FireInvoicingRequestPE(List<OpportunityChangeEvent> events) {
         
         List<Id> oppIds = new List<Id>();
